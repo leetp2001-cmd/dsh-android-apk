@@ -1,0 +1,36 @@
+/* =============================================================================
+   Markdown 渲染样式
+   md() 产出块级元素，只有段落 .p 保留 pre-wrap（折行靠源码换行）
+   ============================================================================= */
+
+/* ==========================================================================
+   Markdown 块级渲染
+   原来的 .bubble 是纯 white-space:pre-wrap，表格会糊成一行（bug 级）。
+   现在 md() 产出块级元素，只有段落 .p 保留 pre-wrap。
+   ========================================================================== */
+.bubble .p { white-space: pre-wrap; }
+.bubble > *:not(.p) { white-space: normal; }
+.bubble .tbl-wrap { overflow-x: auto; margin: 10px 0; -webkit-overflow-scrolling: touch; border-radius: 8px; }
+.bubble table { border-collapse: collapse; font-size: 12.5px; min-width: 100%; }
+.bubble th, .bubble td {
+  border: 1px solid var(--border); padding: 6px 10px;
+  text-align: left; vertical-align: top; line-height: 1.5;
+}
+.bubble th { background: var(--code-bg); font-weight: 700; white-space: nowrap; color: var(--text-soft); }
+.bubble tbody tr:nth-child(even) { background: var(--panel-2); }
+.bubble h1, .bubble h2, .bubble h3, .bubble h4 { margin: 14px 0 6px; line-height: 1.35; color: var(--text); }
+.bubble h1 { font-size: 17px; } .bubble h2 { font-size: 15.5px; }
+.bubble h3 { font-size: 14px; } .bubble h4 { font-size: 13.5px; }
+.bubble h1:first-child, .bubble h2:first-child,
+.bubble h3:first-child, .bubble h4:first-child { margin-top: 2px; }
+.bubble ul, .bubble ol { margin: 7px 0 7px 21px; }
+.bubble li { margin: 3px 0; line-height: 1.6; }
+.bubble li > ul, .bubble li > ol { margin-top: 3px; margin-bottom: 3px; }
+.bubble blockquote {
+  border-left: 3px solid var(--accent-line); background: var(--panel-2);
+  padding: 6px 0 6px 12px; border-radius: 0 6px 6px 0;
+  color: var(--muted); margin: 10px 0;
+}
+.bubble a { color: var(--accent); text-decoration: none; word-break: break-all; }
+.bubble a:active { text-decoration: underline; }
+.bubble hr { border: none; border-top: 1px solid var(--border); margin: 14px 0; }

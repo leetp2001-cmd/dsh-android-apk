@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1">
+<title>dsh 控制台</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+<!-- 样式按层加载：令牌 → 组件 → 响应式。
+     响应式放最后，否则被同特异性的组件规则覆盖。 -->
+<link rel="stylesheet" href="/assets/styles/01-tokens.css">
+<link rel="stylesheet" href="/assets/styles/02-sidebar.css">
+<link rel="stylesheet" href="/assets/styles/03-chat.css">
+<link rel="stylesheet" href="/assets/styles/04-media.css">
+<link rel="stylesheet" href="/assets/styles/05-push.css">
+<link rel="stylesheet" href="/assets/styles/06-queue.css">
+<link rel="stylesheet" href="/assets/styles/07-cards.css">
+<link rel="stylesheet" href="/assets/styles/08-panels.css">
+<link rel="stylesheet" href="/assets/styles/09-markdown.css">
+<link rel="stylesheet" href="/assets/styles/10-responsive.css">
+</head>
+<body>
+<header>
+  <button id="btn-menu">☰</button>
+  <span class="logo">🌊 dsh 控制台</span>
+  <span class="dot" id="conn-dot"></span>
+  <span class="conn" id="conn-text">未连接</span>
+  <span class="ver" id="app-ver" title="前端版本（点一下刷新页面）">v8</span>
+  <span class="spacer"></span>
+  <button id="btn-install">⬇ 安装 APP</button>
+  <button id="btn-push" title="消息推送设置">🔔</button>
+  <button id="btn-new">＋ 新会话</button>
+</header>
+<main>
+  <div id="sidebar">
+    <input id="search" placeholder="搜索会话…">
+    <div id="session-list"></div>
+  </div>
+  <div id="chat">
+    <div id="chat-head">
+      <div style="min-width:0;flex:1">
+        <div id="chat-title">未选择会话</div>
+        <div id="chat-meta"></div>
+      </div>
+      <button id="ctx-pill" title="上下文与用量"><span class="pbar"><span class="pfill"></span></span><span class="ptext">--</span></button>
+      <button id="btn-quiet" style="flex-shrink:0;margin-left:8px">🔇 降噪中</button>
+    </div>
+    <div id="messages"><div class="empty" id="empty-hint">从左侧选择一个会话<br>消息会实时流式显示</div></div>
+    <div id="input-bar">
+      <div id="todo-bar" style="display:none"></div>
+      <div id="queue-bar" style="display:none"></div>
+      <div id="attach-bar"></div>
+      <div id="input-wrap">
+        <button id="btn-pick" title="发送图片" disabled>＋</button>
+        <textarea id="prompt" rows="1" placeholder="输入消息…" disabled></textarea>
+        <button id="btn-cancel" style="display:none">中断</button>
+        <button id="send" class="primary" disabled>发送</button>
+      </div>
+      <input id="file-img" type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple>
+    </div>
+  </div>
+</main>
+<div class="toast" id="toast"></div>
+<button id="jump-bottom">⬇ 回到底部</button>
+<div id="drawer-mask"></div>
+<div id="q-banner" style="display:none"></div>
+<div id="a-banner" style="display:none"></div>
+<div id="ctx-panel"></div>
+<div id="modal-mask">
+  <div id="modal">
+    <h3>新建会话</h3>
+    <input id="new-cwd" value="" placeholder="工作目录绝对路径，如 ~/projects/demo">
+    <div class="row">
+      <button id="modal-cancel">取消</button>
+      <button id="modal-ok" class="primary">创建</button>
+    </div>
+  </div>
+</div>
+<div id="lightbox"><button class="lb-close">✕</button><img alt=""></div>
+
+<!-- 推送设置 -->
+<div id="push-mask">
+  <div id="push-panel">
+    <div class="pp-head">
+      <span class="pp-title">🔔 消息推送</span>
+      <button class="pp-close">✕</button>
+    </div>
+    <div class="pp-body">
+      <p class="pp-lead">任务跑完、需要审批时推到手机，不必守在页面前。</p>
+
+      <div class="pp-row pp-switch-row">
+        <span>启用推送</span>
+        <label class="pp-switch"><input type="checkbox" id="push-enabled"><i></i></label>
+      </div>
+
+      <div class="pp-sec">推送渠道</div>
+      <div id="push-channels"></div>
+      <div class="pp-addrow">
+        <select id="push-add-type">
+          <option value="bark">Bark（iPhone，最省事）</option>
+          <option value="ntfy">ntfy（安卓/自建都行）</option>
+          <option value="serverchan">Server 酱（微信）</option>
+        </select>
+        <button id="push-add">＋ 添加</button>
+      </div>
+
+      <div class="pp-sec">推什么</div>
+      <label class="pp-check"><input type="checkbox" id="push-on-turnEnd"> 任务跑完</label>
+      <label class="pp-check"><input type="checkbox" id="push-on-error"> 执行出错（含在「跑完」里）</label>
+      <label class="pp-check"><input type="checkbox" id="push-on-approval"> 需要审批</label>
+      <label class="pp-check"><input type="checkbox" id="push-on-question"> 有问题等你回答</label>
+
+      <div class="pp-sec">静音时段</div>
+      <div class="pp-row">
+        <label class="pp-check" style="margin:0"><input type="checkbox" id="push-quiet-on"> 启用</label>
+        <input id="push-quiet-start" class="pp-time" placeholder="23:30" inputmode="numeric">
+        <span class="pp-dash">—</span>
+        <input id="push-quiet-end" class="pp-time" placeholder="07:30" inputmode="numeric">
+      </div>
+
+      <div class="pp-sec">点通知回到</div>
+      <input id="push-base" class="pp-input" placeholder="https://你的隧道域名（留空则通知不带链接）">
+
+      <div id="push-status" class="pp-status"></div>
+    </div>
+    <div class="pp-foot">
+      <button id="push-test">发送测试</button>
+      <button id="push-save" class="primary">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 脚本按依赖顺序加载，全部是经典脚本（非 ES module）：
+     模块之间靠全局符号通信，测试脚本也用 page.evaluate 直接读这些符号。
+     新增模块请插在 18 之前，19-main.js 永远压在最后。 -->
+<script src="/assets/js/01-state.js"></script>
+<script src="/assets/js/02-utils.js"></script>
+<script src="/assets/js/03-stream.js"></script>
+<script src="/assets/js/04-session-list.js"></script>
+<script src="/assets/js/05-session-render.js"></script>
+<script src="/assets/js/06-drawer.js"></script>
+<script src="/assets/js/07-queue-bar.js"></script>
+<script src="/assets/js/08-message-dom.js"></script>
+<script src="/assets/js/09-images.js"></script>
+<script src="/assets/js/10-ctx-panel.js"></script>
+<script src="/assets/js/11-events.js"></script>
+<script src="/assets/js/12-composer.js"></script>
+<script src="/assets/js/13-actions.js"></script>
+<script src="/assets/js/14-questions.js"></script>
+<script src="/assets/js/15-approval.js"></script>
+<script src="/assets/js/16-boot.js"></script>
+<script src="/assets/js/17-push-panel.js"></script>
+<script src="/assets/js/18-preferences.js"></script>
+<script src="/assets/js/19-main.js"></script>
+</body>
+</html>

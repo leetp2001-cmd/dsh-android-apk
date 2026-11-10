@@ -1,0 +1,126 @@
+/* =============================================================================
+   推送设置面板
+   ============================================================================= */
+
+/* ===== 推送设置面板 ===== */
+#push-mask {
+  position: fixed; inset: 0; z-index: 95; display: none;
+  background: rgba(23, 32, 43, .42); align-items: center; justify-content: center;
+  padding: 16px; overflow-y: auto;
+}
+#push-mask.show { display: flex; }
+#push-panel {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 16px;
+  width: min(460px, 100%); max-height: calc(100vh - 32px); display: flex; flex-direction: column;
+  box-shadow: 0 20px 56px rgba(23, 32, 43, .18);
+}
+.pp-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.pp-title { font-size: 15px; font-weight: 600; }
+.pp-close {
+  width: 30px; height: 30px; padding: 0; border: none; border-radius: 8px;
+  background: transparent; color: var(--muted); font-size: 15px;
+}
+.pp-close:active { background: var(--hover); }
+.pp-body { padding: 14px 16px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.pp-lead { color: var(--muted); font-size: 12.5px; line-height: 1.6; margin: 0 0 14px; }
+.pp-sec {
+  font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase;
+  letter-spacing: .04em; margin: 18px 0 8px;
+}
+.pp-row { display: flex; align-items: center; gap: 8px; }
+.pp-switch-row { justify-content: space-between; font-size: 14px; }
+.pp-input, .pp-time {
+  width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 13.5px;
+  border: 1px solid var(--border-strong); border-radius: 9px;
+  background: var(--bg); color: var(--text); outline: none;
+}
+.pp-input:focus, .pp-time:focus { border-color: var(--accent-line); }
+.pp-time { width: 74px; text-align: center; flex-shrink: 0; }
+.pp-dash { color: var(--muted); }
+.pp-check {
+  display: flex; align-items: center; gap: 7px; font-size: 13.5px;
+  padding: 6px 0; cursor: pointer;
+}
+.pp-check input { width: 16px; height: 16px; accent-color: var(--accent); }
+/* 开关 */
+.pp-switch { position: relative; display: inline-block; width: 44px; height: 25px; flex-shrink: 0; }
+.pp-switch input { opacity: 0; width: 0; height: 0; }
+.pp-switch i {
+  position: absolute; inset: 0; border-radius: 999px; background: var(--border-strong);
+  transition: background .18s; cursor: pointer;
+}
+.pp-switch i::before {
+  content: ""; position: absolute; top: 3px; left: 3px; width: 19px; height: 19px;
+  border-radius: 50%; background: #fff; transition: transform .18s;
+  box-shadow: 0 1px 3px rgba(23, 32, 43, .22);
+}
+.pp-switch input:checked + i { background: var(--accent); }
+.pp-switch input:checked + i::before { transform: translateX(19px); }
+/* 渠道卡 */
+.pch {
+  border: 1px solid var(--border); border-radius: 11px; padding: 10px 11px;
+  margin-bottom: 8px; background: var(--bg);
+}
+.pch-top { display: flex; align-items: center; gap: 7px; margin-bottom: 7px; }
+.pch-type { font-size: 12.5px; font-weight: 600; }
+.pch-del {
+  margin-left: auto; width: 26px; height: 26px; padding: 0; border: none; border-radius: 7px;
+  background: transparent; color: var(--muted); font-size: 13px;
+}
+.pch-del:active { background: var(--err-soft); color: var(--err); }
+.pch input {
+  width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 13px;
+  border: 1px solid var(--border-strong); border-radius: 8px;
+  background: var(--panel); color: var(--text); outline: none; margin-bottom: 6px;
+}
+.pch input:last-child { margin-bottom: 0; }
+.pp-addrow { display: flex; gap: 8px; margin-top: 10px; }
+.pp-addrow select {
+  flex: 1; min-width: 0; padding: 9px 10px; font-size: 13px;
+  border: 1px solid var(--border-strong); border-radius: 9px;
+  background: var(--bg); color: var(--text);
+}
+.pp-addrow button { flex-shrink: 0; }
+.pp-status { margin-top: 14px; font-size: 12.5px; line-height: 1.6; min-height: 18px; }
+.pp-status.ok { color: var(--ok); }
+.pp-status.err { color: var(--err); }
+.pp-foot {
+  display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border); flex-shrink: 0;
+}
+.pp-foot button { flex: 1; }
+#btn-push { padding: 5px 9px; }
+
+/* 中断键：跟发送键同排（拇指够得着），只在会话运行中现身。
+   原实现在顶栏、且显示状态只在 openSession 时算一次，发消息后根本不出现。 */
+#btn-cancel {
+  align-self: flex-end; height: 40px; padding: 0 14px; flex-shrink: 0;
+  border: 1px solid #f0b6b0; background: var(--err-soft); color: var(--err);
+  font-weight: 600; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 6px; justify-content: center;
+  animation: cancelPulse 1.8s ease-in-out infinite;
+}
+/* 方块图标用 CSS 画：⏹ 是彩色 emoji，Android 上会被系统染成橙黄方块，
+   CSS 的 color 管不住它，跟红色文字撞色。伪元素能跟着文字色一起变。 */
+#btn-cancel::before {
+  content: ""; width: 9px; height: 9px; border-radius: 2px;
+  background: currentColor; flex-shrink: 0;
+}
+#btn-cancel:hover { background: #fbdedb; border-color: var(--err); color: var(--err); }
+/* 两段式确认：第二下才是真中断，所以武装态必须是强对比的红底白字 */
+#btn-cancel.armed {
+  background: var(--err); border-color: var(--err); color: #fff; animation: none;
+  box-shadow: 0 0 0 3px rgba(217, 45, 32, .16);
+}
+#btn-cancel.armed::before { width: 11px; height: 11px; border-radius: 50%; }
+#btn-cancel.armed:hover { background: #b92418; border-color: #b92418; color: #fff; }
+/* 点了之后在等 dsh 回应的短态：动画停下，别让用户以为没点上 */
+#btn-cancel:disabled { animation: none; opacity: .75; }
+@keyframes cancelPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(217, 45, 32, .16); }
+  50% { box-shadow: 0 0 0 4px rgba(217, 45, 32, .1); }
+}
+@media (prefers-reduced-motion: reduce) { #btn-cancel { animation: none; } }
+

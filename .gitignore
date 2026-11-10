@@ -1,0 +1,45 @@
+# ===== 本机私有数据，绝对不能提交 =====
+# 访问口令（自动生成）
+.passphrase
+# 推送配置：含你的隧道地址与 ntfy/Bark/Server酱 的 key/topic
+.push.json
+# 隧道当前地址
+.tunnel-url
+.tunnel-url.bak-*
+# 本脚本起的 ngrok 进程号
+.ngrok.pid
+# 边缘认证密钥（命名隧道免口令用）
+.edge-secret
+# 安卓签名私钥与口令
+*.keystore
+*.jks
+*.p12
+
+# ===== 构建产物 =====
+android/.build/
+*.apk
+*.aab
+*.idsig
+
+# ===== 运行与依赖 =====
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
+
+# ===== 编辑器的本地配置 =====
+.idea/
+.vscode/
+*.iml
+
+# ===== 历史备份 =====
+*.bak
+*.bak-*
+*.orig
+
+# ===== 例外：以下是为了让仓库开箱可用的演示件 =====
+# demo.keystore 是专为开源生成的演示签名（口令 dshconsole-demo，公开写在 README 里），
+# 不用于正式发布；你自己真实发版用的 keystore 仍被上面的 *.keystore 挡住。
+!demo.keystore
+# 预编译的演示 APK，方便不会配 Android 工具链的人直接装。
+!public/dsh-console.apk

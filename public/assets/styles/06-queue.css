@@ -1,0 +1,74 @@
+/* =============================================================================
+   输入区组件：中断键 + 排队条
+   ============================================================================= */
+
+/* 排队条：常驻显示"还没被执行"的消息，可单条删除 / 插队
+   （dsh 排队模式没有超时，消息可能等几十分钟；不显示出来用户完全无从判断） */
+#queue-bar {
+  max-width: 860px; margin: 0 auto 10px; border: 1px solid var(--accent-line);
+  border-radius: 11px; background: var(--accent-soft); overflow: hidden;
+}
+#queue-bar .qhead {
+  display: flex; align-items: center; gap: 7px; padding: 7px 11px;
+  font-size: 12px; font-weight: 600; color: var(--accent);
+}
+#queue-bar .qhead .qcount {
+  background: var(--accent); color: #fff; border-radius: 9px;
+  padding: 0 7px; font-size: 11px; line-height: 17px;
+}
+#queue-bar .qhead .qhint { font-weight: 400; }
+/* 多条时不撑破屏幕：列表内部滚动（比折叠更省点击，手机上每条都能直接删） */
+#queue-bar .qlist { max-height: 178px; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+#queue-bar .qitem {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 8px 11px; border-top: 1px solid var(--accent-line);
+  background: var(--panel);
+}
+#queue-bar .qidx { color: var(--muted); font-size: 11.5px; min-width: 15px; padding-top: 2px; }
+#queue-bar .qmain { flex: 1; min-width: 0; }
+#queue-bar .qtext {
+  font-size: 12.5px; line-height: 1.45;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  word-break: break-word;
+}
+#queue-bar .qtext.open { -webkit-line-clamp: unset; display: block; }
+#queue-bar .qmeta { color: var(--muted); font-size: 11px; margin-top: 3px; }
+#queue-bar .qmeta .qmore { color: var(--accent); margin-left: 6px; }
+#queue-bar .qacts { display: flex; gap: 6px; flex-shrink: 0; }
+#queue-bar .qacts button {
+  padding: 4px 9px; font-size: 11.5px; border-radius: 7px; background: var(--panel);
+  min-height: 30px; min-width: 34px; line-height: 1.1; /* 手机可点区，不低于 30px */
+  box-shadow: none;
+}
+#queue-bar .qact-steer { color: var(--accent); border-color: var(--accent-line); }
+#queue-bar .qact-del { color: var(--err); border-color: #f5c7c2; }
+/* 二次确认态：按钮变实心红，文案换「确认删除」，避免误触删掉队列 */
+#queue-bar .qact-del.armed { background: var(--err); color: #fff; border-color: var(--err); font-weight: 600; }
+#queue-bar .qitem.confirming { background: var(--err-soft); }
+.toast {
+  position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+  background: var(--err); color: #fff; padding: 9px 17px; border-radius: 10px;
+  font-size: 13px; display: none; z-index: 10; max-width: 70vw;
+  box-shadow: var(--shadow-lg);
+}
+/* 新会话弹窗 */
+#modal-mask {
+  position: fixed; inset: 0; background: rgba(23, 32, 43, .3); display: none;
+  align-items: center; justify-content: center; z-index: 20;
+  backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
+}
+#modal {
+  background: var(--panel); border-radius: 14px; padding: 22px;
+  /* 固定 420px 时手机上会被 flex 容器压缩到满屏宽，左右一点留白都没有，看着像贴边。
+     用 min() 主动收窄，窄屏保留 32px 边距，宽屏仍是 420px。 */
+  width: min(420px, calc(100vw - 32px));
+  border: 1px solid var(--border); box-shadow: var(--shadow-lg);
+}
+#modal h3 { margin-bottom: 12px; font-size: 15px; }
+#modal input {
+  width: 100%; padding: 9px 11px; border: 1px solid var(--border-strong); border-radius: 9px;
+  background: var(--panel); color: var(--text); font: inherit; margin-bottom: 14px; outline: none;
+}
+#modal input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(47, 107, 255, .12); }
+#modal .row { display: flex; gap: 10px; justify-content: flex-end; }
+

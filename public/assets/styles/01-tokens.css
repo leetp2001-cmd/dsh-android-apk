@@ -1,0 +1,92 @@
+/* =============================================================================
+   基础层：设计令牌（颜色/阴影/圆角）+ 全局重置 + 顶栏 + 按钮基线
+   =============================================================================
+   所有颜色都收在 :root 变量里，JS 只操作类名，改主题不用碰逻辑。
+   整体亮色（浅灰底 + 纯白卡片），不跟随系统深色 —— 手机浏览器地址栏
+   颜色由 theme-color 控制，跟随深色会让顶栏和页面割裂。
+   ============================================================================= */
+:root {
+  --bg: #eef2f9;            /* 页面底：微冷浅灰，压深一档让白卡片浮起来 */
+  --panel: #ffffff;         /* 卡片 / 顶栏 / 侧栏 */
+  --panel-2: #fafbfe;       /* 次级面（代码块头、表格头） */
+  --border: #e5e9f0;
+  --border-strong: #d6dde8;
+  --line: #e5e9f0;          /* 老代码用的别名，别再漏定义 */
+
+  --text: #17202b;          /* 正文：近黑，不用纯黑，久看不刺眼 */
+  --text-soft: #3c4a5c;
+  --muted: #697688;         /* 次要信息 */
+
+  --accent: #2f6bff;        /* 主色：偏亮的蓝，亮底上够醒目 */
+  --accent-hover: #2359e8;
+  --accent-soft: #eef4ff;   /* 选中态 / 强调底 */
+  --accent-line: #c9dbff;
+
+  --user-bubble: linear-gradient(135deg, #4c85ff 0%, #2f6bff 100%);
+  --user-text: #ffffff;
+
+  --ok: #0f9d58; --ok-soft: #e8f8ef;
+  --warn: #b45309; --warn-soft: #fff6e8;
+  --err: #d92d20; --err-soft: #fdecea;
+
+  --code-bg: #f2f5fa;
+  --hover: #eff4fa;
+
+  --shadow-sm: 0 1px 2px rgba(23, 32, 43, .05), 0 1px 3px rgba(23, 32, 43, .04);
+  --shadow-md: 0 4px 16px rgba(23, 32, 43, .08), 0 1px 3px rgba(23, 32, 43, .05);
+  --shadow-lg: 0 16px 44px rgba(23, 32, 43, .14), 0 3px 10px rgba(23, 32, 43, .06);
+  --shadow-accent: 0 2px 8px rgba(47, 107, 255, .22);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: -apple-system, "SF Pro Text", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--bg); color: var(--text); font-size: 13px;
+  display: flex; flex-direction: column;
+  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+}
+header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px; background: var(--panel); border-bottom: 1px solid var(--border);
+  flex-shrink: 0; box-shadow: var(--shadow-sm); position: relative; z-index: 2;
+}
+header .logo { font-weight: 700; font-size: 15px; letter-spacing: -.01em; }
+header .dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--err);
+  animation: pulse 1.4s ease-in-out infinite;
+  box-shadow: 0 0 0 3px rgba(217, 45, 32, .12);
+}
+header .dot.ok { background: var(--ok); animation: none; box-shadow: 0 0 0 3px rgba(15, 157, 88, .14); }
+header .conn { color: var(--muted); font-size: 12px; }
+/* 版本徽标：手机上用来确认加载的是不是新前端（旧页面会显示旧版本号） */
+header .ver {
+  color: var(--muted); font-size: 10px;
+  border: 1px solid var(--border); border-radius: 6px;
+  background: var(--bg);
+  padding: 1px 5px; cursor: pointer; user-select: none;
+}
+header .ver:active { background: var(--accent-soft); color: var(--accent); }
+header .spacer { flex: 1; }
+button {
+  font: inherit; border: 1px solid var(--border-strong); background: var(--panel);
+  color: var(--text); border-radius: 9px; padding: 6px 12px; cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: background .15s, border-color .15s, color .15s, box-shadow .15s, transform .06s;
+}
+button:hover { background: var(--hover); border-color: var(--accent-line); color: var(--accent); }
+button:active { transform: scale(.96); box-shadow: none; }
+button:disabled { opacity: .5; cursor: default; box-shadow: none; }
+button.primary {
+  background: var(--accent); border-color: var(--accent); color: #fff;
+  box-shadow: var(--shadow-accent);
+}
+button.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); color: #fff; }
+/* 运行中把发送键降级：中断才是当下该点的那个。
+   优先级说明：#send.primary 的规则在前面，这里用 #send 提高特异性才压得住。 */
+#send.secondary {
+  background: var(--panel); border-color: var(--border-strong); color: var(--muted); box-shadow: none;
+}
+#send.secondary:hover { background: var(--hover); border-color: var(--accent-line); color: var(--accent); }
+#send.secondary:active { background: var(--accent-soft); }
+main { flex: 1; display: flex; min-height: 0; }
+

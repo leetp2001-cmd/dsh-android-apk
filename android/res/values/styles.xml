@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      浅色主题：让系统 ActionBar / 状态栏跟网页的亮色配色一致。
+
+      不能改成 NoActionBar：右上角三点菜单是「更换服务器地址」的
+      唯一入口（onCreateOptionsMenu 里 add 的），去掉就再也改不了地址。
+
+      父主题用 Theme.Material.Light，它默认就是浅色 ActionBar，
+      只需要把主色/状态栏/强调色调成和网页一致。
+    -->
+    <style name="AppTheme" parent="@android:style/Theme.Material.Light">
+        <item name="android:colorPrimary">#FFFFFF</item>
+        <item name="android:colorPrimaryDark">#FFFFFF</item>
+        <item name="android:colorAccent">#2F6BFF</item>
+        <item name="android:windowBackground">#EEF2F9</item>
+        <item name="android:statusBarColor">#FFFFFF</item>
+        <item name="android:navigationBarColor">#FFFFFF</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
+</resources>

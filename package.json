@@ -1,0 +1,38 @@
+{
+  "name": "dsh-android-apk",
+  "version": "1.0.0",
+  "description": "把跑在电脑上的 dsh（DeepSeek Harness）装进手机：代理层 + PWA + Android WebView 壳",
+  "license": "MIT",
+  "private": true,
+  "main": "server.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OWNER/dsh-android-apk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/OWNER/dsh-android-apk/issues"
+  },
+  "homepage": "https://github.com/OWNER/dsh-android-apk#readme",
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "android",
+    "pwa",
+    "webview",
+    "mobile",
+    "coding-agent",
+    "proxy"
+  ],
+  "scripts": {
+    "start": "./start.sh",
+    "tunnel": "./tunnel-ngrok.sh",
+    "probe": "node probe.js",
+    "doctor": "./doctor.sh"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "ws": "^8.21.3"
+  }
+}

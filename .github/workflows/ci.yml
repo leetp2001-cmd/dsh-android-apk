@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: Syntax and startup check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # 仓库里只有 ws 一个运行时依赖。CI 装它，是为了让启动检查跑在
+      # 和用户机器上一样的条件下 —— 而不是靠 runner 里碰巧存在什么。
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Syntax check (JavaScript)
+        run: |
+          fail=0
+          while IFS= read -r f; do
+            if ! node --check "$f"; then
+              echo "::error file=$f::syntax error"
+              fail=1
+            fi
+          done < <(git ls-files '*.js')
+          exit $fail
+
+      - name: Syntax check (shell)
+        run: |
+          fail=0
+          while IFS= read -r f; do
+            if ! bash -n "$f"; then
+              echo "::error file=$f::syntax error"
+              fail=1
+            fi
+          done < <(git ls-files '*.sh')
+          exit $fail
+
+      # 真正的门禁：服务能起来、能登录、页面能拿到。
+      # 只做语法检查是假的门禁 —— 语法全对的代码照样可以起不来。
+      - name: Startup smoke test
+        env:
+          DSH_APP_PORT: '18760'
+        run: |
+          set -euo pipefail
+          # 上游 dsh 不在 CI 里跑；代理层应当在它缺席时也能起来并给出诊断，
+          # 这本身就是需要验证的行为（不能因为上游挂了就起不来）。
+          DSH_AUTHORITY=127.0.0.1:3080 ./start.sh > /tmp/start.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl -fsS -o /dev/null "http://127.0.0.1:18760/" 2>/dev/null; then
+              break
+            fi
+            sleep 0.5
+          done
+
+          echo "--- start.sh output ---"
+          cat /tmp/start.log
+          echo "--- end ---"
+
+          # 未鉴权时应返回登录页
+          code=$(curl -s -o /tmp/login.html -w '%{http_code}' "http://127.0.0.1:18760/")
+          test "$code" = "200" || { echo "::error::login page returned $code"; exit 1; }
+          # 登录页没有 <form>，是 input + button + fetch，所以断言这两个元素。
+          grep -q 'id="pw"' /tmp/login.html || { echo "::error::no passphrase input in login page"; exit 1; }
+          grep -q 'id="go"' /tmp/login.html || { echo "::error::no submit button in login page"; exit 1; }
+
+          # 登录
+          pass=$(cat .passphrase)
+          code=$(curl -s -o /dev/null -w '%{http_code}' \
+            -X POST -H 'Content-Type: application/json' \
+            -d "{\"passphrase\":\"$pass\"}" \
+            "http://127.0.0.1:18760/auth")
+          test "$code" = "200" || { echo "::error::auth returned $code"; exit 1; }
+
+          echo "smoke test passed"

@@ -1,0 +1,14 @@
+# 默认把 @OWNER 设为所有文件的评审人。
+# OWNER 是占位符，填上实际维护者的 GitHub 账号才会生效。
+# 换了维护者就改这里的用户名；单人维护也可以直接删掉本文件。
+
+* @OWNER
+
+# 流式链路与鉴权是最容易出安全问题的地方，改动需要额外留意
+/src/auth/           @OWNER
+/src/ws/             @OWNER
+/src/dsh/rpc.js      @OWNER
+
+# 文档与截图可以放宽
+/docs/               @OWNER
+*.md                 @OWNER

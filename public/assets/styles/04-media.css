@@ -1,0 +1,69 @@
+/* =============================================================================
+   图片：选图按钮 + 草稿缩略图 + 消息内图片 + 大图查看层
+   ============================================================================= */
+
+/* ===== 图片：选图按钮 + 草稿缩略图 + 消息内图片 ===== */
+/* 选图按钮跟发送键同排，做成方形图标键，不跟「发送」抢视线 */
+#btn-pick {
+  align-self: flex-end; height: 40px; width: 40px; padding: 0; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 10px; background: var(--panel); border: 1px solid var(--border-strong);
+  color: var(--muted); font-size: 19px; line-height: 1;
+}
+#btn-pick:active { background: var(--hover); color: var(--accent); border-color: var(--accent-line); }
+#btn-pick:disabled { opacity: .45; }
+/* 用完即弃的 file input：不能用 display:none（部分 WebView 会拒绝弹选择器） */
+#file-img { position: fixed; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+
+/* 草稿区：横排缩略图，带删除角和超过上限的提示 */
+#attach-bar {
+  max-width: 860px; margin: 0 auto 8px; display: none;
+  gap: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 2px;
+}
+#attach-bar.show { display: flex; }
+.athumb {
+  position: relative; flex-shrink: 0; width: 62px; height: 62px; border-radius: 9px;
+  overflow: hidden; border: 1px solid var(--border-strong); background: var(--code-bg);
+}
+.athumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.athumb.busy::after {
+  content: "…"; position: absolute; inset: 0; display: flex; align-items: center;
+  justify-content: center; background: rgba(23, 32, 43, .45); color: #fff; font-size: 20px;
+}
+.athumb .ax {
+  position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; border: none;
+  border-radius: 50%; background: rgba(23, 32, 43, .62); color: #fff;
+  font-size: 11px; line-height: 18px; padding: 0; text-align: center; cursor: pointer;
+}
+
+/* 消息内图片：气泡里铺满宽度上限、可点开大图 */
+.mimg { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 2px; }
+.mimg:first-child { margin-top: 0; }
+.mimg .mimg-cell {
+  position: relative; border-radius: 9px; overflow: hidden; max-width: 100%;
+  border: 1px solid var(--border); background: var(--code-bg); cursor: zoom-in;
+  display: flex; align-items: center; justify-content: center;
+}
+.mimg img { display: block; max-width: min(240px, 58vw); max-height: 240px; object-fit: contain; }
+.msg.user .mimg .mimg-cell { border-color: rgba(255, 255, 255, .28); background: rgba(255, 255, 255, .12); }
+.mimg .mimg-ph {
+  padding: 20px 18px; font-size: 12px; color: var(--muted); min-width: 76px;
+  min-height: 56px; display: flex; align-items: center; justify-content: center;
+}
+.msg.user .mimg .mimg-ph { color: rgba(255, 255, 255, .82); }
+.mimg .mimg-cell.failed .mimg-ph { color: var(--err); }
+.mimg .mimg-cell.failed { cursor: pointer; }
+/* 大图查看层 */
+#lightbox {
+  position: fixed; inset: 0; z-index: 90; display: none;
+  background: rgba(12, 16, 22, .93); align-items: center; justify-content: center;
+  padding: 16px; touch-action: pinch-zoom;
+}
+#lightbox.show { display: flex; }
+#lightbox img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 6px; }
+#lightbox .lb-close {
+  position: absolute; top: calc(env(safe-area-inset-top, 0px) + 12px); right: 14px;
+  width: 38px; height: 38px; border-radius: 50%; border: none;
+  background: rgba(255, 255, 255, .16); color: #fff; font-size: 19px; line-height: 1;
+}
+

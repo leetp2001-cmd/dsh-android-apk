@@ -1,0 +1,97 @@
+/* =============================================================================
+   交互卡：提问卡 + 审批卡
+   两者走同一条 $events waterfall 通道，视觉上必须能区分（提问=蓝，审批=橙）
+   ============================================================================= */
+
+/* ---------- dsh 提问卡片（全局：桌面/移动通用） ---------- */
+#q-banner {
+  position: fixed; left: 0; right: 0; bottom: 90px; z-index: 40;
+  display: none; justify-content: center; pointer-events: none;
+}
+#q-banner .qcard { pointer-events: auto; background: var(--panel); border: 1px solid var(--accent-line);
+            border-radius: 15px; padding: 15px; width: min(560px, calc(100vw - 20px));
+            box-shadow: var(--shadow-lg); max-height: 58vh; overflow-y: auto; margin: 0 10px; }
+.qcard h4 { margin: 0 0 5px; font-size: 13.5px; color: var(--text); }
+.qcard .qtext { color: var(--muted); font-size: 12px; margin-bottom: 9px; white-space: pre-wrap; }
+.qcard .qopt { display: block; width: 100%; text-align: left; margin: 6px 0; padding: 10px 12px;
+            border: 1px solid var(--border-strong); border-radius: 10px; background: var(--panel);
+            color: var(--text); font-size: 12.5px; cursor: pointer; box-shadow: none;
+            transition: border-color .15s, background .15s; }
+.qcard .qopt:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.qcard .qdesc { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+.qcard .qcustom { width: 100%; box-sizing: border-box; margin-top: 6px; padding: 9px 11px;
+            border: 1px solid var(--border-strong); border-radius: 9px; background: var(--panel);
+            color: var(--text); font-size: 13px; outline: none; }
+.qcard .qcustom:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(47, 107, 255, .12); }
+.qcard .qsubmit { margin-top: 8px; width: 100%; padding: 9px; }
+.qcard .qsubmit:disabled { opacity: .45; cursor: not-allowed; }
+.qcard .qbatch { color: var(--warn); font-size: 12px; margin-bottom: 8px; }
+.qcard .qblock { padding: 10px 0; border-top: 1px solid var(--border); }
+.qcard .qblock:first-of-type { border-top: none; padding-top: 0; }
+.qcard .qblock.skipped .qtext, .qcard .qblock.skipped .qopt { opacity: .4; }
+.qcard .qopt.sel { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.qcard .qskip { background: none; border: none; color: var(--muted); font-size: 12px;
+            padding: 4px 0; cursor: pointer; text-decoration: underline; box-shadow: none; }
+.qcard .qskip:hover { background: none; color: var(--accent); }
+/* 其他会话有待答问题时的折叠跳转条 */
+.qcard.qmini { padding: 6px 12px; max-height: none; }
+.qcard .qgoto { display: block; width: 100%; text-align: left; background: none;
+            border: none; color: var(--accent); font-size: 12.5px; padding: 6px 2px; cursor: pointer;
+            box-shadow: none; }
+.qcard .qgoto:hover { background: var(--accent-soft); border-radius: 6px; color: var(--accent); }
+.qcard .qgoto:active { opacity: .7; }
+/* 队列提示 + 逐题导航 */
+.qcard .qqueue { color: var(--muted); font-size: 12px; margin-bottom: 8px; }
+.qcard .qnav { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 10px; }
+.qcard .qprev { background: none; border: none; color: var(--muted); padding: 6px 4px; box-shadow: none; }
+.qcard .qprev:hover { background: var(--hover); color: var(--accent); border-radius: 6px; }
+.qcard .qnext {
+  background: var(--accent); border-color: var(--accent); color: #fff; padding: 8px 16px;
+  box-shadow: var(--shadow-accent);
+}
+.qcard .qnext:hover { background: var(--accent-hover); border-color: var(--accent-hover); color: #fff; }
+.qcard .qnext:disabled { opacity: .45; box-shadow: none; }
+
+
+/* ==========================================================================
+   P0-1 审批卡
+   走和提问卡完全相同的 $events waterfall 通道，但 outcome 结构不同
+   （{kind:"result", value:"allowed-once"|"rejected"}），所以独立渲染。
+   同时存在时审批卡在下、提问卡在上——冲突概率极低但不留重叠可能。
+   ========================================================================== */
+#a-banner {
+  position: fixed; left: 0; right: 0; bottom: 90px; z-index: 45;
+  display: none; justify-content: center; pointer-events: none;
+}
+#a-banner .acard {
+  pointer-events: auto; background: var(--panel); border: 1px solid #f0c48a;
+  border-radius: 15px; padding: 15px; width: min(560px, calc(100vw - 20px));
+  box-shadow: var(--shadow-lg); max-height: 58vh; overflow-y: auto; margin: 0 10px;
+  border-top: 3px solid var(--warn);
+}
+#a-banner .atop { display: flex; align-items: center; gap: 7px; margin-bottom: 9px; }
+#a-banner .adot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--warn);
+  animation: pulse 1.2s ease-in-out infinite; flex-shrink: 0;
+  box-shadow: 0 0 0 3px var(--warn-soft);
+}
+#a-banner .atitle { font-weight: 700; font-size: 13.5px; color: var(--warn); }
+#a-banner .amore { margin-left: auto; color: var(--muted); font-size: 11.5px; }
+#a-banner .atool {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12.5px; color: var(--accent);
+  background: var(--accent-soft); border: 1px solid var(--accent-line);
+  border-radius: 6px; padding: 3px 8px; display: inline-block; margin-bottom: 9px;
+}
+#a-banner .areason {
+  color: var(--text-soft); font-size: 12px; white-space: pre-wrap; line-height: 1.6;
+  margin-bottom: 12px; max-height: 170px; overflow-y: auto;
+}
+#a-banner .aacts { display: flex; gap: 10px; }
+#a-banner .aacts button {
+  flex: 1; padding: 12px 0; font-size: 13.5px; font-weight: 600; border-radius: 10px; min-height: 44px;
+}
+#a-banner .aallow { background: var(--ok); border-color: var(--ok); color: #fff; box-shadow: 0 2px 8px rgba(15,157,88,.22); }
+#a-banner .aallow:hover { background: #0c8a4d; border-color: #0c8a4d; color: #fff; }
+#a-banner .adeny { color: var(--err); border-color: #f5c7c2; background: var(--panel); }
+#a-banner .adeny:hover { background: var(--err-soft); border-color: var(--err); color: var(--err); }
+
