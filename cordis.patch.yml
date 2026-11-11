@@ -1,0 +1,22 @@
+# dsh-android-apk bundle patch
+#
+# 这个文件是 package.json 里 `dsh.bundle.patch` 指向的那一层。安装时
+# `dsh plugin add` 会把它挂进 profile 的 bundle 栈：
+#
+#   dsh plugin --profile web add https://github.com/leetp2001-cmd/dsh-android-apk
+#
+# 组件本身在 lib/index.mjs：装载时起代理服务，卸载时关掉。
+# 它不 inject 任何 dsh 服务，自己开端口（默认 8760），所以没有依赖顺序问题。
+#
+# 不填 config 也能跑（全部默认值）。需要改端口时：
+#
+#   - insert:
+#       - id: dsh-android-apk
+#         name: 'dsh-android-apk'
+#         config:
+#           port: 8761
+#           bind: 0.0.0.0
+#           dshAuthority: 127.0.0.1:3080
+- insert:
+    - id: dsh-android-apk
+      name: 'dsh-android-apk'

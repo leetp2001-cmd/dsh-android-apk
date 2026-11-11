@@ -16,6 +16,36 @@ const ROOT = path.join(__dirname, "..");
 const DSH_HOME = process.env.DSH_HOME || path.join(os.homedir(), ".dsh");
 
 /**
+ * 可写的状态目录：口令、边缘密钥、推送配置都落这里。
+ *
+ * 两种跑法，目录必须分开：
+ *   · 直接 `./start.sh` —— 包目录就是工作目录，STATE_DIR === ROOT，和以前完全一致
+ *   · 作为 dsh 插件被安装 —— 包在 node_modules 下，权限只读、升级时整个替换。
+ *     私密文件写进去会丢，所以退到 ~/.dsh/dsh-android-apk
+ *
+ * 静态资源（PUBLIC_DIR）始终跟着包走，它是只读的，不需要搬。
+ * 显式指定用 DSH_APP_STATE_DIR。
+ */
+function resolveStateDir(root) {
+  if (process.env.DSH_APP_STATE_DIR) return process.env.DSH_APP_STATE_DIR;
+  // 被包管理器安装时，路径里会出现 node_modules；源码目录不会
+  return /[\\/]node_modules[\\/]/.test(root)
+    ? path.join(DSH_HOME, "dsh-android-apk")
+    : root;
+}
+
+const STATE_DIR = resolveStateDir(ROOT);
+
+// 插件态下这个目录是新出现的（~/.dsh/dsh-android-apk），得自己建。
+// 源码目录跑时 STATE_DIR === ROOT，一定已存在，这行是空操作。
+// 建不出来不致命：口令会退化成「每次启动重新生成」，其余功能照常。
+try {
+  if (STATE_DIR !== ROOT) require("node:fs").mkdirSync(STATE_DIR, { recursive: true, mode: 0o700 });
+} catch (error) {
+  console.warn(`[dsh-app] 无法创建状态目录 ${STATE_DIR}：${error.message}（口令将不落盘）`);
+}
+
+/**
  * dsh web 的监听地址（host:port），不是完整 URL。
  *
  * 默认 3080 —— 这是 dsh 自己的默认值（`dsh --dump-default-config --profile web`
@@ -33,6 +63,7 @@ const DSH_AUTHORITY = process.env.DSH_AUTHORITY || "127.0.0.1:3080";
 module.exports = {
   ROOT,
   PUBLIC_DIR: path.join(ROOT, "public"),
+  STATE_DIR,
 
   DSH_HOME,
   DSH_AUTHORITY,
@@ -42,10 +73,10 @@ module.exports = {
   PORT: Number(process.env.DSH_APP_PORT || 8760),
   BIND_HOST: process.env.DSH_APP_BIND || "127.0.0.1",
 
-  /** 本机私有文件（都在仓库根，已被 .gitignore 挡住） */
-  PASSPHRASE_FILE: path.join(ROOT, ".passphrase"),
-  EDGE_SECRET_FILE: path.join(ROOT, ".edge-secret"),
-  PUSH_CONFIG_FILE: path.join(ROOT, ".push.json"),
+  /** 本机私有文件（源码目录跑时在仓库根，已被 .gitignore 挡住；插件态在 STATE_DIR） */
+  PASSPHRASE_FILE: path.join(STATE_DIR, ".passphrase"),
+  EDGE_SECRET_FILE: path.join(STATE_DIR, ".edge-secret"),
+  PUSH_CONFIG_FILE: path.join(STATE_DIR, ".push.json"),
 
   /** 口令可用环境变量直接给，省去落盘 */
   PASSPHRASE_FROM_ENV: process.env.DSH_APP_PASS || "",

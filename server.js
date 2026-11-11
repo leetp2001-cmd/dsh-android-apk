@@ -25,35 +25,55 @@
 const { createApp } = require("./src/app");
 const { runPreflight, printPreflight } = require("./src/lib/preflight");
 
-const app = createApp();
-
-app.listen().catch((err) => {
-  if (err && err.code === "EADDRINUSE") {
-    console.error(
-      `[dsh-app] 端口被占用。换一个端口：DSH_APP_PORT=8761 ./start.sh\n` +
-        `           或先停掉已有实例：pkill -f "node server.js"`
-    );
-  } else {
-    console.error("[dsh-app] 启动失败:", err);
-  }
-  process.exit(1);
-});
-
-// 自检放在监听之后跑：即使上游没就绪，本服务也应该先起来（dsh 可能随后启动）。
-// 但结果要尽早打出来，否则用户看到空白页面时已经不知道该查什么了。
-runPreflight()
-  .then(printPreflight)
-  .catch((e) => console.error("[preflight] 自检本身出错:", e.message));
-
-// 优雅退出：让 WS 与推送定时器有机会收尾，避免留下半死连接
-let shuttingDown = false;
-for (const sig of ["SIGINT", "SIGTERM"]) {
-  process.on(sig, () => {
-    if (shuttingDown) return;
-    shuttingDown = true;
-    console.log(`\n[dsh-app] 收到 ${sig}，正在退出…`);
-    app.close().finally(() => process.exit(0));
-    // 兜底：关不干净也别僵在这里
-    setTimeout(() => process.exit(0), 3000).unref();
-  });
+/**
+ * 装配并监听，返回应用对象。
+ *
+ * 拆出来是为了插件外壳（lib/index.mjs）能复用它 —— 那边要拿 close() 做卸载收尾，
+ * 而不是让 socket 留在进程里。
+ * @returns {Promise<ReturnType<typeof createApp>>}
+ */
+async function startServer() {
+  const app = createApp();
+  await app.listen();
+  return app;
 }
+
+/** 命令行跑法：node server.js / ./start.sh。被 import 时整段不执行。 */
+function runAsCommand() {
+  const app = createApp();
+
+  app.listen().catch((err) => {
+    if (err && err.code === "EADDRINUSE") {
+      console.error(
+        `[dsh-app] 端口被占用。换一个端口：DSH_APP_PORT=8761 ./start.sh\n` +
+          `           或先停掉已有实例：pkill -f "node server.js"`
+      );
+    } else {
+      console.error("[dsh-app] 启动失败:", err);
+    }
+    process.exit(1);
+  });
+
+  // 自检放在监听之后跑：即使上游没就绪，本服务也应该先起来（dsh 可能随后启动）。
+  // 但结果要尽早打出来，否则用户看到空白页面时已经不知道该查什么了。
+  runPreflight()
+    .then(printPreflight)
+    .catch((e) => console.error("[preflight] 自检本身出错:", e.message));
+
+  // 优雅退出：让 WS 与推送定时器有机会收尾，避免留下半死连接
+  let shuttingDown = false;
+  for (const sig of ["SIGINT", "SIGTERM"]) {
+    process.on(sig, () => {
+      if (shuttingDown) return;
+      shuttingDown = true;
+      console.log(`\n[dsh-app] 收到 ${sig}，正在退出…`);
+      app.close().finally(() => process.exit(0));
+      // 兜底：关不干净也别僵在这里
+      setTimeout(() => process.exit(0), 3000).unref();
+    });
+  }
+}
+
+module.exports = { startServer, runAsCommand };
+
+if (require.main === module) runAsCommand();

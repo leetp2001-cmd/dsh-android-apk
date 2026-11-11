@@ -1,26 +1,29 @@
 {
   "name": "dsh-android-apk",
-  "version": "1.0.0",
-  "description": "把跑在电脑上的 dsh（DeepSeek Harness）装进手机：代理层 + PWA + Android WebView 壳",
+  "version": "1.1.0",
+  "description": "Put dsh (DeepSeek Harness) on your phone: proxy + PWA + Android APK. 把跑在电脑上的 dsh 装进手机：代理层 + PWA + Android WebView 壳",
   "license": "MIT",
-  "private": true,
   "main": "server.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/OWNER/dsh-android-apk.git"
+    "url": "git+https://github.com/leetp2001-cmd/dsh-android-apk.git"
   },
   "bugs": {
-    "url": "https://github.com/OWNER/dsh-android-apk/issues"
+    "url": "https://github.com/leetp2001-cmd/dsh-android-apk/issues"
   },
-  "homepage": "https://github.com/OWNER/dsh-android-apk#readme",
+  "homepage": "https://github.com/leetp2001-cmd/dsh-android-apk#readme",
   "keywords": [
     "dsh",
+    "dsh-plugin",
     "deepseek-harness",
     "android",
+    "apk",
     "pwa",
     "webview",
     "mobile",
     "coding-agent",
+    "remote-access",
+    "remote-control",
     "proxy"
   ],
   "scripts": {
@@ -30,7 +33,40 @@
     "doctor": "./doctor.sh"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=18",
+    "dsh": ">=0.2.0"
+  },
+  "exports": {
+    ".": {
+      "default": "./lib/index.mjs"
+    },
+    "./server": {
+      "default": "./server.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/**/*",
+    "src/**/*",
+    "public/**/*",
+    "server.js",
+    "cordis.patch.yml",
+    "start.sh",
+    "doctor.sh",
+    "probe.js",
+    "tunnel.sh",
+    "tunnel-ngrok.sh",
+    "tunnel-setup.sh",
+    "README.md",
+    "README.en.md",
+    "TECH-DESIGN.md",
+    "SECURITY.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
   },
   "dependencies": {
     "ws": "^8.21.3"

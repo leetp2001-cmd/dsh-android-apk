@@ -82,6 +82,9 @@ dsh 的 web 界面只监听回环地址（`127.0.0.1:3080`），手机访问不�
 
 它**不是** dsh 的重新实现，也不碰你的模型和 API key。它只跟已经在跑的 dsh 对话。
 
+它本身是一个 dsh 插件（`dsh.bundle` + `cordis.patch.yml`），所以既能被
+`dsh plugin add` 装进 dsh 一起启停，也能脱离 dsh 单独 `./start.sh` 跑。两种方式跑的是同一份代码。
+
 ---
 
 ## 5 分钟跑通
@@ -106,14 +109,23 @@ dsh web
 ### 第 1 步：拿到本项目
 
 ```bash
-git clone https://github.com/OWNER/dsh-android-apk.git
+git clone https://github.com/leetp2001-cmd/dsh-android-apk.git
 cd dsh-android-apk
 ```
 
-> `OWNER` 是仓库所属账号的占位符。把地址栏里实际的账号名填进去，或者直接在 GitHub
-> 页面上点 **Code → Download ZIP** 下载，跳过 clone。
+> 也可以在 GitHub 页面上点 **Code → Download ZIP** 下载，跳过 clone。
 
 ### 第 2 步：启动
+
+**方式 A：作为 dsh 插件装（推荐，随 dsh 启停）**
+
+```bash
+dsh plugin --profile web add github:leetp2001-cmd/dsh-android-apk
+```
+
+装完重启 dsh。之后它跟着 dsh 一起起停，在插件管理里可开关，不用另开终端。
+
+**方式 B：直接跑（不进插件体系）**
 
 ```bash
 ./start.sh
@@ -465,6 +477,7 @@ platforms/android-34）、JDK 17 和 JDK 21 —— 缺了脚本会直接告诉�
 | `DSH_APP_PORT` | `8760` | 本服务端口 |
 | `DSH_APP_BIND` | `::` | 监听地址，`127.0.0.1` 则仅本机 |
 | `DSH_APP_PASS` | 读 `.passphrase` | 访问口令，不设则自动生成 |
+| `DSH_APP_STATE_DIR` | 见下 | 口令/推送配置写到哪。源码跑 = 仓库根；插件态 = `~/.dsh/dsh-android-apk` |
 | `DSH_HOME` | `~/.dsh` | dsh 的数据目录 |
 | `DSH_AUTHORITY` | `127.0.0.1:3080` | **dsh web 的地址，最常需要改的就是这个** |
 | `DSH_EDGE_SECRET` | 读 `.edge-secret` | 边缘认证密钥，不设则关闭该功能 |
@@ -472,6 +485,18 @@ platforms/android-34）、JDK 17 和 JDK 21 —— 缺了脚本会直接告诉�
 | `DSH_NGROK_DASH_PORT` | `4041` | ngrok 面板端口，避开 4040 免和其他 ngrok 抢 |
 
 **常驻运行（macOS）**：参考 `TECH-DESIGN.md` 的 LaunchAgent 章节，或自己写 plist。
+
+### 口令和配置存在哪
+
+取决于怎么跑，因为包目录在插件态下是只读的（升级会整个替换）：
+
+| 跑法 | 包位置 | 口令 / 推送配置 |
+|---|---|---|
+| `./start.sh` | 你的 git clone 目录 | 就在仓库根（`.passphrase` 等，已被 `.gitignore` 挡住） |
+| `dsh plugin add` | `node_modules/dsh-android-apk` | `~/.dsh/dsh-android-apk/` |
+
+两种情况都不用你操心 —— 自动判断，`DSH_APP_STATE_DIR` 可以强制指定。
+**从手动跑切到插件装，口令会换一个**，重新看一次新位置里的 `.passphrase` 就行。
 
 ---
 
@@ -630,7 +655,9 @@ cd android && ./build-apk.sh
 
 ```
 .
-├── server.js              # 入口：只做 装配 → 监听 → 优雅退出（约 60 行）
+├── server.js              # 入口：装配 → 监听 → 优雅退出；导出 startServer() 供插件复用
+├── lib/index.mjs          # 插件外壳：apply() 起服务，dispose 时关掉（约 80 行）
+├── cordis.patch.yml       # dsh.bundle 指向的挂载声明
 ├── doctor.sh              # 自助诊断：7 项检查，只读不写  ← 出问题先跑它
 ├── src/
 │   ├── app.js             # 装配层：唯一知道全貌的地方
@@ -651,7 +678,7 @@ cd android && ./build-apk.sh
 │   ├── dsh-console.apk    # 预编译演示版（演示签名）
 │   └── manifest.webmanifest
 ├── probe.js               # 探针：dsh 升级后确认 RPC 参数形态
-├── package.json           # 唯一依赖 ws；只在需要时 npm install
+├── package.json           # 唯一依赖 ws；声明 dsh.bundle，可被 dsh plugin add 安装
 ├── start.sh               # 启动脚本（探测 node、打印访问地址）
 ├── tunnel-ngrok.sh        # ngrok 固定域名隧道（推荐：地址永久不变）
 ├── tunnel.sh              # Cloudflare 快速隧道（临时，地址每次都变）
@@ -670,6 +697,23 @@ cd android && ./build-apk.sh
 ### 后端分层
 
 `server.js` 不含业务逻辑。依赖单向：`app.js` → 各业务层 → `lib/`，没有反向 require。
+
+### 插件外壳（`lib/index.mjs`）
+
+同一份代码有两种启动方式，区别只在谁负责生命周期：
+
+| | `./start.sh` / `node server.js` | 作为 dsh 插件 |
+|---|---|---|
+| 谁启动 | 你自己（或 LaunchAgent） | dsh 的 cordis 装载器 |
+| 入口 | `runAsCommand()` | `apply(ctx)` → `startServer()` |
+| 谁收尾 | SIGINT/SIGTERM → `app.close()` | `ctx.effect` 的 dispose → `app.close()` |
+| 首次口令 | 仓库根 `.passphrase` | `~/.dsh/dsh-android-apk/.passphrase` |
+
+外壳只做三件事：读 config → `startServer()` → 注册 dispose。**不碰协议，不 inject 任何
+dsh 服务**（它自己开端口，不用 dsh 的 webServer），所以没有启动顺序依赖。
+
+启动失败**不抛异常**：端口被占或上游没起来只打一条警告。理由是插件加载失败会让整棵
+cordis 树起不来 —— 那等于「手机端连不上」升级成「桌面端也打不开」，代价不对等。
 
 | 目录 | 职责 | 关键约束 |
 |---|---|---|
