@@ -94,8 +94,7 @@ dsh 的 web 界面只监听回环地址（`127.0.0.1:3080`），手机访问不�
 本项目是 dsh 的**外围**，dsh 没装好一切都白搭。先单独确认它：
 
 ```bash
-# 还没装？装一个（需要 Node.js 18+）
-npm i -g @deepseek-ai/dsh
+# 还没装 dsh 的话，先装上它（需要 Node.js 18+），装法见 dsh 官方文档
 
 # 启动 dsh web 界面
 dsh web
@@ -215,8 +214,7 @@ DSH_AUTHORITY=127.0.0.1:<你的端口> ./start.sh
 唯一的外部依赖。任选一种：
 
 ```bash
-npm install          # 仓库目录装一份（推荐）
-npm i -g ws          # 或全局装
+npm install          # 仓库目录装一份，推荐
 ```
 
 通常不用管：装了 dsh 的话它一定在，脚本会自动找到。
