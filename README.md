@@ -52,7 +52,8 @@ dsh 跑在你电脑上，界面只能在电脑上看。这个项目补上手机�
 dsh plugin --profile web add github:leetp2001-cmd/dsh-android-apk
 ```
 
-重启 dsh，它就跟着一起起来了。端口和口令在 `./start.sh` 的输出里，或看日志。
+重启 dsh，它就跟着一起起来了。服务启动时会在日志里打印访问地址和口令
+（口令也存在 `.passphrase` 里，权限 600）。
 
 **不想进插件体系的：**
 

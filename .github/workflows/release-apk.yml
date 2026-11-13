@@ -43,13 +43,19 @@ jobs:
       - name: Record JDK 21
         run: echo "JAVA_HOME_21=$JAVA_HOME" >> "$GITHUB_ENV"
 
-      # runner 自带 Android SDK，但 build-tools 34 未必预装。
-      # setup-android 会把 sdkmanager 装好并接受 license，省掉 `yes |` 那段。
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
+      # ubuntu-latest runner 已预装 Android SDK 和 cmdline-tools，只需补 build-tools 34。
+      # 不用 android-actions/setup-android：v3 会先 `sdkmanager tools` 装那个早已下架的
+      # 包，失败就整个 action 挂掉（实测 exit 1，报 "Failed to find package 'tools'"）。
       - name: Install build-tools 34
-        run: sdkmanager "build-tools;34.0.0" "platforms;android-34"
+        run: |
+          SDK="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          echo "SDK: $SDK"
+          SDKMANAGER="$(ls -d "$SDK"/cmdline-tools/*/bin/sdkmanager 2>/dev/null | head -1)"
+          [ -x "$SDKMANAGER" ] || { echo "::error::sdkmanager not found under $SDK"; exit 1; }
+          yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
+          "$SDKMANAGER" "build-tools;34.0.0" "platforms;android-34"
+          test -x "$SDK/build-tools/34.0.0/apksigner" || { echo "::error::build-tools 34 missing"; exit 1; }
+          echo "✓ build-tools 34.0.0 ready"
 
       - name: Build APK
         run: |
