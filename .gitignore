@@ -36,6 +36,8 @@ Thumbs.db
 *.bak
 *.bak-*
 *.orig
+# 改文档前的快照目录
+.readme-backup-*/
 
 # ===== 例外：以下是为了让仓库开箱可用的演示件 =====
 # demo.keystore 是专为开源生成的演示签名（口令 dshconsole-demo，公开写在 README 里），

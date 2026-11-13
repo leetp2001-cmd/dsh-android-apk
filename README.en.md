@@ -1,9 +1,9 @@
 # dsh-android-apk
 
-**Put dsh (DeepSeek Harness) — the coding agent on your computer — into your phone.**
+**Take over the dsh sessions running on your computer — from your phone.**
 
-Browse sessions, stream chat, send and receive images, and get a push notification when a
-task finishes or needs your approval.
+dsh runs on your machine, and its UI only exists there. This project adds the phone end:
+the same sessions, the same context, picked up where you left off.
 
 [中文](README.md) · [Technical design](TECH-DESIGN.md)
 
@@ -12,6 +12,20 @@ task finishes or needs your approval.
 ![Android](https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white)
 ![Dependencies](https://img.shields.io/badge/runtime%20deps-1-blue)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
+
+## Is this what you want? (30 seconds)
+
+| What you want | What to use |
+|---|---|
+| A coding agent that runs **standalone on the phone**, no computer involved | **Not this.** Look for a project that bundles Node and dsh into an APK — phone-local container, heavier but self-contained |
+| dsh already running on your desktop, and you want to follow **the same sessions** from the couch or the commute | **This one** |
+| Just look at it from a phone browser, install nothing | Works. It is a PWA; the APK is an optional shell |
+
+**The cost, up front**: your computer must stay on, dsh must be running, and you need a tunnel
+to reach it from outside. This is not "install an app, get an AI" — it is an **extension of the
+workflow you already have**. What you get back: no session syncing between devices, one context.
+
+---
 
 > **Your phone is not a remote desktop — it is a purpose-built client.** Sessions grouped by
 > date, streaming output with collapsible tool cards, pushes to the notification shade when a
@@ -27,6 +41,28 @@ task finishes or needs your approval.
 <p align="center">
   <sub><b>Streaming chat</b> · <b>Session list</b> · <b>Command approval</b> · <b>Push settings</b></sub>
 </p>
+
+> Session titles, paths (`/Users/demo/...`) and project names in these screenshots are fabricated
+> demo data. No real conversation content appears.
+
+---
+
+## Get it running
+
+```bash
+git clone https://github.com/leetp2001-cmd/dsh-android-apk.git
+cd dsh-android-apk && ./start.sh
+```
+
+`start.sh` prints a LAN address and a passphrase. Open the address on your phone, enter the
+passphrase. **No app needed** — it is a PWA; add it to the home screen for a full-screen window.
+
+Want the APK shell (faster launch, its own icon)? See [Install as an app](#install-as-an-app).
+
+**dsh must already be running on your computer.** If not, do [Quick start](#quick-start) first.
+
+<details>
+<summary>More screenshots (context meter, new session, login, wide-screen layout)</summary>
 
 <p align="center">
   <img src="docs/screenshots/mobile-context.png" width="31%" alt="Context meter: used / limit, breakdown, cumulative tokens, current model">
@@ -47,8 +83,7 @@ task finishes or needs your approval.
   ratio and spacing recalculated rather than stretched</sub>
 </p>
 
-> Session titles, paths (`/Users/demo/...`) and project names in these screenshots are fabricated
-> demo data. No real conversation content appears.
+</details>
 
 ---
 
@@ -93,13 +128,11 @@ address in a browser to confirm dsh's own UI loads.
 ### Step 1 — get this project
 
 ```bash
-git clone https://github.com/OWNER/dsh-android-apk.git
+git clone https://github.com/leetp2001-cmd/dsh-android-apk.git
 cd dsh-android-apk
 ```
 
-> `OWNER` is a placeholder for the account that hosts this repo. Replace it with
-> the actual account from your address bar, or just use **Code → Download ZIP**
-> on the GitHub page and skip the clone.
+> No git? Use **Code → Download ZIP** on the GitHub page.
 
 ### Step 2 — start it
 
@@ -300,9 +333,17 @@ browser chrome. On iOS use Safari → Share → Add to Home Screen.
 
 ### Native APK
 
-The repository ships `public/dsh-console.apk` (a small WebView shell, demo-signed). Open the
-service URL on your phone and tap the download link on the login page. **On first launch it
-asks for the server address** — enter the one `./start.sh` printed, or your tunnel domain.
+Two ways, pick one:
+
+1. **From Releases** (recommended) — grab `dsh-console.apk` from the
+   [latest release](https://github.com/leetp2001-cmd/dsh-android-apk/releases/latest). On first
+   launch it asks for the server address.
+2. **From the running service** — open the service URL and tap the download link on the login
+   page. That serves the checked-in `public/dsh-console.apk` (56KB, demo-signed).
+
+> Release builds are produced by CI with the bundled demo key on every tag. A demo key means
+> **anyone can sign an identical-looking APK** — fine for installing on your own phone, not for
+> distribution. To publish your own build, see below.
 
 To build it yourself (different package name, your own icon, your own signature):
 

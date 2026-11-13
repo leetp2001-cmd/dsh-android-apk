@@ -18,15 +18,12 @@ sent back for changes.
 No build step, no bundler, no framework.
 
 ```bash
-git clone https://github.com/OWNER/dsh-android-apk.git
+git clone https://github.com/leetp2001-cmd/dsh-android-apk.git
 cd dsh-android-apk
 
 ./start.sh          # generates a passphrase and starts the service
 ./doctor.sh         # 7 checks; run this first when something looks wrong
 ```
-
-`OWNER` in the clone URL is a placeholder for the account hosting this repo —
-substitute the real one, or download a ZIP from the GitHub page instead.
 
 The only runtime dependency is `ws`, and it is usually already present if dsh is installed. If
 it is not:

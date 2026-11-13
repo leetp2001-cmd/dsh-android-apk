@@ -1,0 +1,94 @@
+name: Release APK
+
+# 只在打 tag 时出包 —— 每次 push 都产出一个构建产物，只会让 Releases 页变噪音。
+# 用法：git tag v1.0.1 && git push origin v1.0.1
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag or version to publish (e.g. v1.0.1)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    name: Build and publish APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # build-apk.sh 需要两个 JDK：17 的 javac 编 class，21 的 d8 转 dex。
+      # setup-java 每调一次会把 JAVA_HOME 指向新装的版本，所以按顺序装、
+      # 装完立刻把当前 JAVA_HOME 记到环境变量里，脚本认 JAVA_HOME_17 / JAVA_HOME_21。
+      - name: Set up JDK 17 (javac)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Record JDK 17
+        run: echo "JAVA_HOME_17=$JAVA_HOME" >> "$GITHUB_ENV"
+
+      - name: Set up JDK 21 (d8)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Record JDK 21
+        run: echo "JAVA_HOME_21=$JAVA_HOME" >> "$GITHUB_ENV"
+
+      # runner 自带 Android SDK，但 build-tools 34 未必预装。
+      # setup-android 会把 sdkmanager 装好并接受 license，省掉 `yes |` 那段。
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install build-tools 34
+        run: sdkmanager "build-tools;34.0.0" "platforms;android-34"
+
+      - name: Build APK
+        run: |
+          cd android
+          chmod +x ./build-apk.sh
+          ./build-apk.sh
+
+      - name: Verify APK
+        run: |
+          APK=public/dsh-console.apk
+          BT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}/build-tools/34.0.0"
+          test -f "$APK" || { echo "::error::no APK produced"; exit 1; }
+          "$BT/apksigner" verify "$APK"
+          "$BT/aapt2" dump badging "$APK" | head -1
+          sha256sum "$APK" > "$APK.sha256"
+          cat "$APK.sha256"
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag || github.ref_name }}
+          name: ${{ inputs.tag || github.ref_name }}
+          files: |
+            public/dsh-console.apk
+            public/dsh-console.apk.sha256
+          body: |
+            ## 安装
+
+            1. 下载 `dsh-console.apk` 装到手机（首次需允许「未知来源」）
+            2. 打开 App，填你电脑的地址：局域网 IP、`xxx.local` 或隧道域名
+            3. 输口令进入
+
+            **前提**：电脑上的 dsh 已经在跑。这不是独立的 AI 客户端，是它的手机端 ——
+            详见 README 开头「三十秒判断该不该往下看」。
+
+            ## 关于签名
+
+            这个包由 CI 用**仓库内置的演示签名**（`demo.keystore`）签出，只用于验证可用性。
+            演示密钥的口令是公开的，意味着任何人都能签出外观一致的包 ——
+            **不要用它对外分发**。发自己的版本请用 `KS_PATH` / `KS_PASS` 重签。
+
+            校验下载：`sha256sum -c dsh-console.apk.sha256`

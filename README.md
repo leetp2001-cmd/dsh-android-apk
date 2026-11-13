@@ -1,8 +1,9 @@
 # dsh-android-apk
 
-**把跑在电脑上的 dsh（DeepSeek Harness）装进手机。**
+**在手机上接管电脑里的 dsh 会话 —— 看输出、批命令、收推送。**
 
-用手机查看会话列表、流式聊天、收发图片，任务跑完或需要审批时收到推送通知。
+dsh 跑在你电脑上，界面只能在电脑上看。这个项目补上手机那一端：同一批会话、同一份上下文，
+通勤路上接着用。
 
 [English](README.en.md) · [技术设计](TECH-DESIGN.md)
 
@@ -11,6 +12,19 @@
 ![Android](https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white)
 ![Dependencies](https://img.shields.io/badge/运行时依赖-1%20个-blue)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
+
+## 三十秒判断该不该往下看
+
+| 你想要什么 | 该用哪个 |
+|---|---|
+| 手机**独立**跑一个 AI 编程 agent，不依赖电脑 | **不要用这个**。去找把 Node 和 dsh 塞进 APK 的方案 —— 那是另一条路线，手机本地起容器，重但自足 |
+| 电脑上已经在用 dsh，想在沙发上/通勤路上**接着看同一批会话**、批命令、收推送 | **就是这个** |
+| 只想在手机浏览器里看看，不想装东西 | 可以。它本身是个 PWA，扫码即用，APK 只是可选外壳 |
+
+**代价说在前面**：电脑得开着，dsh 得在跑，出门要通一条隧道。它不是"装个 APP 就有 AI"，
+它是**你现有工作流的延长线**。换来的是：不需要在两台设备之间同步会话，上下文还是那一份。
+
+---
 
 > **手机不是远程桌面，是一个专门的客户端。** 会话列表按日期分组、流式输出带工具卡片、
 > 任务跑完推到通知栏 —— 界面是为手机重新排的，不是把桌面版缩小塞进浏览器。
@@ -25,6 +39,37 @@
 <p align="center">
   <sub><b>流式聊天</b> · <b>会话列表</b> · <b>命令审批</b> · <b>消息推送</b></sub>
 </p>
+
+> 截图里的会话、路径（`/Users/demo/...`）和项目名都是构造的演示数据，不含任何真实会话内容。
+
+---
+
+## 装起来
+
+**已经在用 dsh 的，一条命令：**
+
+```bash
+dsh plugin --profile web add github:leetp2001-cmd/dsh-android-apk
+```
+
+重启 dsh，它就跟着一起起来了。端口和口令在 `./start.sh` 的输出里，或看日志。
+
+**不想进插件体系的：**
+
+```bash
+git clone https://github.com/leetp2001-cmd/dsh-android-apk.git
+cd dsh-android-apk && ./start.sh
+```
+
+两条路都会打印一个局域网地址和一个口令。手机浏览器打开那个地址、输口令即可。
+**不需要装 App** —— 它本身就是 PWA，加到主屏就是全屏独立窗口。
+
+要 APK 外壳（启动更快、有独立图标），见[装成 APP](#装成-app)。
+
+**前提是你的电脑上 dsh 已经在跑。** 没跑先看 [5 分钟跑通](#5-分钟跑通)。
+
+<details>
+<summary>更多截图（上下文仪表、新建会话、登录页、宽屏分栏）</summary>
 
 <p align="center">
   <img src="docs/screenshots/mobile-context.png" width="31%" alt="上下文仪表：已用 / 上限、分项构成、累计 token、当前模型">
@@ -44,13 +89,14 @@
   <sub>同一份界面在宽屏上自动变成左右分栏：左边会话列表，右边聊天，比例和间距都是重新算的</sub>
 </p>
 
-> 截图里的会话、路径（`/Users/demo/...`）和项目名都是构造的演示数据，不含任何真实会话内容。
+</details>
 
 ---
 
 ## 目录
 
-- [为什么需要它](#为什么需要它) ← **先看这个，两分钟**
+- [三十秒判断该不该往下看](#三十秒判断该不该往下看) ← **先看这个，不用三十秒**
+- [为什么需要它](#为什么需要它)
 - [5 分钟跑通](#5-分钟跑通)
 - [出问题了](#出问题了)
 - [手机访问](#手机访问)
@@ -112,7 +158,7 @@ git clone https://github.com/leetp2001-cmd/dsh-android-apk.git
 cd dsh-android-apk
 ```
 
-> 也可以在 GitHub 页面上点 **Code → Download ZIP** 下载，跳过 clone。
+> 不想用 git 也行：在 GitHub 页面点 **Code → Download ZIP**。
 
 ### 第 2 步：启动
 
@@ -426,15 +472,23 @@ DSH_NGROK_POOLING=1 ./tunnel-ngrok.sh
 
 ## 装成 APP
 
-**PWA（最简单，无需构建）**
+**PWA（推荐，无需构建）**
 
 安卓 Chrome 打开公网地址 → 菜单「添加到主屏幕」→ 全屏独立运行，和原生 App 观感接近。
+iOS Safari 用「共享 → 添加到主屏幕」，同样可用。
 
 **原生 APK**
 
-仓库里带了一个 `public/dsh-console.apk`（56KB，演示签名），手机上打开服务地址后
-点**登录页**上的「⬇ 下载手机 APP 安装包」即可安装。**首次启动会让你填服务器地址** ——
-填 `./start.sh` 打印的那个，或你的隧道域名。
+两种拿法，选一个：
+
+1. **从 Releases 直接下**（推荐）—— [Latest release](https://github.com/leetp2001-cmd/dsh-android-apk/releases/latest)
+   里的 `dsh-console.apk`，装完首次启动填服务器地址。
+2. **从跑起来的服务下** —— 打开服务地址后点**登录页**上的「⬇ 下载手机 APP 安装包」，
+   这条路径拿到的是仓库自带的 `public/dsh-console.apk`（56KB，演示签名）。
+
+> Release 里的包由 CI 用仓库内置的演示签名自动构建，每次打 tag 出一个。
+> 演示签名的特点是**人人都能签出同样的包** —— 所以它只适合自己装来用，
+> 不适合正式分发。要发自己的版本，往下看。
 
 想自己打包（改包名、改图标、用自己的签名）：
 
