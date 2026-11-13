@@ -80,7 +80,8 @@ jobs:
           name: ${{ inputs.tag || github.ref_name }}
           files: |
             public/dsh-console.apk
-            public/dsh-console.apk.sha256          body: |
+            public/dsh-console.apk.sha256
+          body: |
             ## 安装
 
             1. 下载 `dsh-console.apk` 装到手机（首次需允许「未知来源」）
