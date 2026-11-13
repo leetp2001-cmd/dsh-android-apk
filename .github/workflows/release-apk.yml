@@ -59,13 +59,13 @@ jobs:
 
       - name: Verify APK
         run: |
-          APK=public/dsh-console.apk
           BT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}/build-tools/34.0.0"
-          test -f "$APK" || { echo "::error::no APK produced"; exit 1; }
-          "$BT/apksigner" verify "$APK"
-          "$BT/aapt2" dump badging "$APK" | head -1
-          sha256sum "$APK" > "$APK.sha256"
-          cat "$APK.sha256"
+          test -f public/dsh-console.apk || { echo "::error::no APK produced"; exit 1; }
+          "$BT/apksigner" verify public/dsh-console.apk
+          "$BT/aapt2" dump badging public/dsh-console.apk | head -1
+          # 只记文件名，不带 public/ 前缀 —— 用户下载后两个文件同目录，
+          # 带路径的校验行会指向一个不存在的 public/。
+          cd public && sha256sum dsh-console.apk > dsh-console.apk.sha256 && cat dsh-console.apk.sha256
 
       - name: Publish release
         uses: softprops/action-gh-release@v2
@@ -74,8 +74,7 @@ jobs:
           name: ${{ inputs.tag || github.ref_name }}
           files: |
             public/dsh-console.apk
-            public/dsh-console.apk.sha256
-          body: |
+            public/dsh-console.apk.sha256          body: |
             ## 安装
 
             1. 下载 `dsh-console.apk` 装到手机（首次需允许「未知来源」）
